@@ -25,6 +25,8 @@ var albums = []album{
 func main() {
 	router := gin.Default()
 	router.GET("/albums", getAlbums)
+	router.GET("/album/:id", getAlbumById)
+	router.POST("/albums", postAlbums)
 	router.Run("localhost:8080")
 }
 
@@ -32,4 +34,38 @@ func main() {
 func getAlbums(c *gin.Context) {
 	// Could just use c.JSON() for uglier json
 	c.IndentedJSON(http.StatusOK, albums)
+}
+
+func getAlbumById(c *gin.Context) {
+	// Extract query param "id"
+	id := c.Param("id")
+
+	// Find the album with the matching id
+	for _, album := range albums {
+		if album.ID == id {
+			// 200 & album returned via context if found inside loop
+			c.IndentedJSON(http.StatusOK, album)
+			return
+		}
+	}
+
+	// If album not found, return message in header and 404
+	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "Album not found"})
+}
+
+// post an album
+func postAlbums(c *gin.Context) {
+	var newAlbum album
+
+	// Binds request "data" to the newAlbum var.
+	// If the data is not of the same shape what happens? => Field that is not included is left empty
+
+	// Call BindJSON to bind the received JSON to newAlbum.
+	if err := c.BindJSON(&newAlbum); err != nil {
+		return
+	}
+
+	// Add the new album to the slice.
+	albums = append(albums, newAlbum)
+	c.IndentedJSON(http.StatusCreated, newAlbum)
 }
